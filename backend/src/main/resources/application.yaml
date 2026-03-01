@@ -1,3 +1,39 @@
 spring:
   application:
     name: doggo-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/doggo}
+    username: ${DB_USERNAME:doggo}
+    password: ${DB_PASSWORD:doggo}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:20MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+
+app:
+  security:
+    jwt-secret: ${JWT_SECRET}
+    jwt-expiration: ${JWT_EXPIRATION:PT24H}
+    jwt-issuer: ${JWT_ISSUER:doggo}
+  storage:
+    upload-dir: ${STORAGE_UPLOAD_DIR:./storage}
+  reviews:
+    daily-limit: ${REVIEW_DAILY_LIMIT:10}
+    min-length: ${REVIEW_MIN_LENGTH:10}
+    max-length: ${REVIEW_MAX_LENGTH:1000}
+  notifications:
+    enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}
