@@ -5,17 +5,17 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
 
 	private final SecurityProperties properties;
-	private final Key signingKey;
+	private final SecretKey signingKey;
 
 	public JwtService(SecurityProperties properties) {
 		this.properties = properties;
@@ -31,6 +31,7 @@ public class JwtService {
 			.expiration(Date.from(now.plus(properties.jwtExpiration())))
 			.claim("uid", user.id().toString())
 			.claim("role", user.role().name())
+			.signWith(signingKey)
 			.compact();
 	}
 
@@ -58,10 +59,9 @@ public class JwtService {
 	}
 
 	private byte[] resolveSecret(String rawSecret) {
-		try {
-			return Decoders.BASE64.decode(rawSecret);
-		} catch (IllegalArgumentException ignored) {
-			return rawSecret.getBytes();
+		if (rawSecret.startsWith("base64:")) {
+			return Decoders.BASE64.decode(rawSecret.substring("base64:".length()));
 		}
+		return rawSecret.getBytes();
 	}
 }
