@@ -21,7 +21,13 @@ app:
     jwt-expiration: PT4H
     jwt-issuer: doggo-test
   storage:
-    upload-dir: ./build/test-storage
+    type: local
+    local-dir: ./build/test-storage
+    endpoint: http://localhost:9000
+    bucket: doggo-test
+    region: us-east-1
+    access-key: test-access-key
+    secret-key: test-secret-key
   reviews:
     daily-limit: 10
     min-length: 10

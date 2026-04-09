@@ -30,7 +30,13 @@ app:
     jwt-expiration: ${JWT_EXPIRATION:PT24H}
     jwt-issuer: ${JWT_ISSUER:doggo}
   storage:
-    upload-dir: ${STORAGE_UPLOAD_DIR:./storage}
+    type: ${STORAGE_TYPE:s3}
+    local-dir: ${STORAGE_LOCAL_DIR:./storage}
+    endpoint: ${S3_ENDPOINT:http://localhost:9000}
+    bucket: ${S3_BUCKET:doggo-files}
+    region: ${S3_REGION:us-east-1}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
   reviews:
     daily-limit: ${REVIEW_DAILY_LIMIT:10}
     min-length: ${REVIEW_MIN_LENGTH:10}

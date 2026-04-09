@@ -32,6 +32,11 @@ public class AuthController {
 		return authService.login(request);
 	}
 
+	@PostMapping("/logout")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void logout() {
+	}
+
 	@GetMapping("/me")
 	public AuthDto.UserSummary me(@AuthenticationPrincipal AuthenticatedUser user) {
 		return authService.getCurrentUser(user);

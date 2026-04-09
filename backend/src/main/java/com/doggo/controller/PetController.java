@@ -5,11 +5,11 @@ import com.doggo.entity.PetAttachment;
 import com.doggo.security.AuthenticatedUser;
 import com.doggo.service.FileStorageService;
 import com.doggo.service.PetService;
+import com.doggo.service.StoredFileContent;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -154,17 +154,17 @@ public class PetController {
 	}
 
 	@GetMapping("/{petId}/attachments/{attachmentId}/download")
-	public ResponseEntity<Resource> downloadAttachment(
+	public ResponseEntity<byte[]> downloadAttachment(
 		@AuthenticationPrincipal AuthenticatedUser user,
 		@PathVariable UUID petId,
 		@PathVariable UUID attachmentId
 	) {
 		PetAttachment attachment = petService.getOwnedAttachment(user.id(), petId, attachmentId);
-		Resource resource = fileStorageService.loadAsResource(attachment.getStorageKey());
+		StoredFileContent content = fileStorageService.load(attachment.getStorageKey(), attachment.getContentType());
 		return ResponseEntity.ok()
-			.contentType(MediaType.parseMediaType(attachment.getContentType()))
+			.contentType(MediaType.parseMediaType(content.contentType()))
 			.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getOriginalFilename() + "\"")
-			.body(resource);
+			.body(content.bytes());
 	}
 
 	@DeleteMapping("/{petId}/attachments/{attachmentId}")

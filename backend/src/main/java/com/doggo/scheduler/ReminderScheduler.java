@@ -20,7 +20,7 @@ public class ReminderScheduler {
 	public void processDueReminders() {
 		int processed = reminderService.markDueRemindersTriggered(OffsetDateTime.now());
 		if (processed > 0 && notificationProperties.enabled()) {
-			log.info("Processed {} due reminders; push provider integration is ready to be attached", processed);
+			log.info("Processed {} due reminders", processed);
 		}
 	}
 }
