@@ -106,8 +106,14 @@ public class PlaceService {
 		});
 		review.setRating(request.rating());
 		review.setText(request.text().trim());
-		review.setStatus(ReviewStatus.PUBLISHED);
+		review.setStatus(ReviewStatus.UNDER_MODERATION);
 		return toReviewResponse(reviewRepository.save(review));
+	}
+
+	public List<PlaceDto.ReviewResponse> listReviewsByStatus(ReviewStatus status) {
+		return reviewRepository.findAllByStatusOrderByCreatedAtDesc(status).stream()
+			.map(this::toReviewResponse)
+			.toList();
 	}
 
 	public List<PlaceDto.ReviewResponse> listReviews(UUID placeId) {
@@ -150,9 +156,28 @@ public class PlaceService {
 		return toReviewResponse(review);
 	}
 
+	@Transactional
+	public PlaceDto.ReviewResponse publishReview(UUID reviewId) {
+		Review review = getReviewEntity(reviewId);
+		review.setStatus(ReviewStatus.PUBLISHED);
+		return toReviewResponse(review);
+	}
+
+	@Transactional
+	public PlaceDto.ReviewResponse rejectReview(UUID reviewId) {
+		Review review = getReviewEntity(reviewId);
+		review.setStatus(ReviewStatus.REJECTED);
+		return toReviewResponse(review);
+	}
+
 	private Place getPlaceEntity(UUID placeId) {
 		return placeRepository.findById(placeId)
 			.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Place not found"));
+	}
+
+	private Review getReviewEntity(UUID reviewId) {
+		return reviewRepository.findById(reviewId)
+			.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Review not found"));
 	}
 
 	private void validateReviewText(String text) {

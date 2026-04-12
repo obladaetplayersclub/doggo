@@ -14,6 +14,8 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
 	List<Review> findAllByPlaceIdAndStatusOrderByCreatedAtDesc(UUID placeId, ReviewStatus status);
 
+	List<Review> findAllByStatusOrderByCreatedAtDesc(ReviewStatus status);
+
 	Optional<Review> findByIdAndPlaceId(UUID reviewId, UUID placeId);
 
 	Optional<Review> findByPlaceIdAndAuthorId(UUID placeId, UUID authorId);

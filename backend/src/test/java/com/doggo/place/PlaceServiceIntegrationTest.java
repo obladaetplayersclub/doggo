@@ -43,7 +43,11 @@ class PlaceServiceIntegrationTest extends IntegrationTestSupport {
 			"Very careful doctors and clear recommendations."
 		);
 
-		PlaceDto.ReviewResponse review = placeService.upsertReview(authorId, place.id(), reviewRequest);
+		PlaceDto.ReviewResponse pendingReview = placeService.upsertReview(authorId, place.id(), reviewRequest);
+		assertThat(pendingReview.status()).isEqualTo(ReviewStatus.UNDER_MODERATION);
+		assertThat(placeService.getPlace(place.id()).reviews()).isEmpty();
+
+		PlaceDto.ReviewResponse review = placeService.publishReview(pendingReview.id());
 		PlaceDto.PlaceDetailsResponse details = placeService.getPlace(place.id());
 		PlaceDto.ReviewResponse reported = placeService.complain(
 			reporterId,
@@ -54,6 +58,7 @@ class PlaceServiceIntegrationTest extends IntegrationTestSupport {
 
 		assertThat(details.averageRating()).isEqualTo(5.0);
 		assertThat(details.reviewCount()).isEqualTo(1);
+		assertThat(review.status()).isEqualTo(ReviewStatus.PUBLISHED);
 		assertThat(reported.complaintCount()).isEqualTo(1);
 	}
 
@@ -96,11 +101,12 @@ class PlaceServiceIntegrationTest extends IntegrationTestSupport {
 	void reviewIsHiddenAfterThreeComplaints() {
 		UUID authorId = registerUser("complaint-author").user().id();
 		UUID placeId = createPlace("Complaint place").getId();
-		PlaceDto.ReviewResponse review = placeService.upsertReview(
+		PlaceDto.ReviewResponse pendingReview = placeService.upsertReview(
 			authorId,
 			placeId,
 			new PlaceDto.ReviewUpsertRequest(4, "Good place, but the queue was long.")
 		);
+		PlaceDto.ReviewResponse review = placeService.publishReview(pendingReview.id());
 		List<UUID> reporterIds = List.of(
 			registerUser("complaint-reporter-1").user().id(),
 			registerUser("complaint-reporter-2").user().id(),
@@ -124,6 +130,25 @@ class PlaceServiceIntegrationTest extends IntegrationTestSupport {
 		assertThat(details.reviews()).isEmpty();
 		assertThat(details.reviewCount()).isEqualTo(0);
 		assertThat(details.averageRating()).isZero();
+	}
+
+	@Test
+	void adminCanRejectReviewFromModerationQueue() {
+		UUID authorId = registerUser("moderation-author").user().id();
+		UUID placeId = createPlace("Moderation place").getId();
+
+		PlaceDto.ReviewResponse review = placeService.upsertReview(
+			authorId,
+			placeId,
+			new PlaceDto.ReviewUpsertRequest(4, "Helpful team and clean waiting area.")
+		);
+		PlaceDto.ReviewResponse rejected = placeService.rejectReview(review.id());
+
+		assertThat(placeService.listReviewsByStatus(ReviewStatus.UNDER_MODERATION))
+			.extracting(PlaceDto.ReviewResponse::id)
+			.doesNotContain(review.id());
+		assertThat(rejected.status()).isEqualTo(ReviewStatus.REJECTED);
+		assertThat(placeService.getPlace(placeId).reviews()).isEmpty();
 	}
 
 	private Place createPlace(String name) {
